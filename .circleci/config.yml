@@ -1,0 +1,50 @@
+version: 2.1
+jobs:
+  build:
+    docker:
+      - image: sahyam/docker:groovy
+        auth:
+          username: "$DOCKER_USERNAME"
+          password: "$DOCKERHUB_TOKEN"
+      - image: circleci/postgres:alpine
+        auth:
+          username: "$DOCKER_USERNAME"
+          password: "$DOCKERHUB_TOKEN"
+        environment:
+          POSTGRES_PASSWORD: postgres
+    # For Personal Use, 1 vCPU + 2GB RAM is enough
+    resource_class: small
+    environment:
+      PORT: 8080
+      WORKDIR: /root/userbot
+      GOOGLE_CHROME_DRIVER: /usr/bin/chromedriver
+      GOOGLE_CHROME_BIN: /usr/bin/google-chrome-stable
+
+    steps:
+      - run:
+          name: Git Auth
+          command: |
+            export GitHubMail GitHubName GITHUB_TOKEN
+            git config --global user.email "$GitHubMail"
+            git config --global user.name "$GitHubName"
+            git config --global credential.helper store
+            git config --global color.ui true
+     
+      - run:
+          name: Add App
+          no_output_timeout: 285m
+          command: | 
+            git clone -b sql-extended https://github.com/linds321/oub-remix userbot
+            cd userbot
+            mkdir userbot/.bin
+            echo -e "\nlaunchpadlib" >> requirements.txt
+            pip3 install --no-cache-dir -r requirements.txt
+            curl -H "Authorization: token ${GITHUB_TOKEN}" -H "Accept: application/vnd.github.v3.raw" "https://raw.githubusercontent.com/linds321/priv-vars/main/oub-config.env" > config.env        
+            python3 -m userbot
+            
+workflows:
+  version: 2
+  workstation:
+    jobs:
+      - build:
+          context: vars-global
