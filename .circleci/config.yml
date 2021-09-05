@@ -25,15 +25,13 @@ jobs:
           name: Git Auth
           command: |
             export GitHubMail GitHubName GITHUB_TOKEN
+            apt-get update && \
+            apt-get upgrade -y && \
+            apt-get install -y git
             git config --global user.email "$GitHubMail"
             git config --global user.name "$GitHubName"
             git config --global credential.helper store
             git config --global color.ui true
-            git clone -q "https://$GITHUB_TOKEN@github.com/$GitHubName/google-git-cookies.git" &> /dev/null
-            if [ -e google-git-cookies ]; then
-              bash google-git-cookies/setup_cookies.sh
-              rm -rf google-git-cookies
-            fi
      
       - run:
           name: Add App
@@ -50,18 +48,21 @@ jobs:
             unzip \
             tree
             
+            apt-get install -y libappindicator1 fonts-liberation libasound2 libatk-bridge2.0-0 libatspi2.0-0 libgbm1 libgtk-3-0 libnspr4 libnss3
+            apt-get -y install dbus-x11 xfonts-base xfonts-100dpi xfonts-75dpi xfonts-cyrillic xfonts-scalable
+            apt-get -y install libxss1 lsb-release xdg-utils
             mkdir -p /tmp/ && \
             cd /tmp/ && \
             wget https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb && \
             dpkg -i ./google-chrome-stable_current_amd64.deb; apt -fqqy install && \
             rm ./google-chrome-stable_current_amd64.deb
+            apt --fix-broken install
             
             mkdir -p /tmp/ && \
             cd /tmp/ && \
             wget -O /tmp/chromedriver.zip http://chromedriver.storage.googleapis.com/$(curl -sS chromedriver.storage.googleapis.com/LATEST_RELEASE)/chromedriver_linux64.zip && \
             unzip /tmp/chromedriver.zip chromedriver -d /usr/bin/ && \
             rm /tmp/chromedriver.zip
-
             apt -qq update && apt -qq install -y --no-install-recommends \
             gcc python3-dev zlib1g-dev \
             apt-transport-https \
@@ -74,7 +75,6 @@ jobs:
             
             git clone -b alpha https://github.com/HydrophobicEnd/Userge-X userbot
             cd userbot
-            mkdir userbot/.bin
             pip install -U setuptools wheel && \
             pip install --no-cache-dir -r requirements.txt
             curl -H "Authorization: token ${GITHUB_TOKEN}" -H "Accept: application/vnd.github.v3.raw" "https://raw.githubusercontent.com/linds321/priv-vars/main/oub-config.env" > config.env        
